@@ -1,0 +1,53 @@
+{
+  "name": "@chainvue/cli",
+  "version": "0.1.0",
+  "description": "ChainVue CLI - Manage your blockchain infrastructure from the command line",
+  "type": "module",
+  "bin": {
+    "chainvue": "./bin/chainvue.js"
+  },
+  "files": [
+    "bin",
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "start": "node bin/chainvue.js"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "cli-table3": "^0.6.5",
+    "commander": "^12.1.0",
+    "conf": "^13.0.1",
+    "keytar": "^7.9.0",
+    "ora": "^8.1.0",
+    "undici": "^6.19.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "tsup": "^8.2.4",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "chainvue",
+    "verus",
+    "blockchain",
+    "cli",
+    "graphql"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chainvue/cli.git"
+  },
+  "homepage": "https://chainvue.io",
+  "bugs": {
+    "url": "https://github.com/chainvue/cli/issues"
+  },
+  "license": "MIT"
+}

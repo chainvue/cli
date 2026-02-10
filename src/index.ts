@@ -7,13 +7,14 @@ import { keysCommand } from './commands/keys.js'
 import { webhooksCommand } from './commands/webhooks.js'
 import { queryCommand } from './commands/query.js'
 import { orgCommand } from './commands/org.js'
+import { CLI_VERSION } from './lib/api.js'
 
 const program = new Command()
 
 program
   .name('chainvue')
   .description('ChainVue CLI - Manage your blockchain infrastructure')
-  .version('0.1.0')
+  .version(CLI_VERSION)
 
 // Auth commands
 program.addCommand(loginCommand)

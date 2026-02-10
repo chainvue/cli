@@ -1,12 +1,38 @@
 import { request } from 'undici'
 import { getApiEndpoint, getCurrentProfile } from './config.js'
 import { getAuthHeader } from './keychain.js'
+import chalk from 'chalk'
+
+declare const __CLI_VERSION__: string
+
+const CLI_VERSION = typeof __CLI_VERSION__ !== 'undefined' ? __CLI_VERSION__ : '0.0.0-dev'
+const USER_AGENT = `ChainVue-CLI/${CLI_VERSION} (${process.platform}; node/${process.version.slice(1)})`
+
+export { CLI_VERSION }
 
 export interface ApiResponse<T = unknown> {
   ok: boolean
   status: number
   data?: T
   error?: string
+}
+
+let updateNoticeShown = false
+
+/**
+ * Check response headers for update notices from the server.
+ */
+function checkForUpdate(headers: Record<string, string | string[] | undefined>): void {
+  if (updateNoticeShown) return
+
+  const latestVersion = headers['x-chainvue-latest-cli'] as string | undefined
+  if (!latestVersion || latestVersion === CLI_VERSION) return
+
+  updateNoticeShown = true
+  console.error()
+  console.error(chalk.yellow(`  Update available: ${CLI_VERSION} → ${latestVersion}`))
+  console.error(chalk.dim(`  Run: npm install -g @chainvue/cli`))
+  console.error()
 }
 
 export async function apiRequest<T = unknown>(
@@ -20,7 +46,7 @@ export async function apiRequest<T = unknown>(
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'User-Agent': 'ChainVue-CLI/0.1.0',
+    'User-Agent': USER_AGENT,
   }
 
   if (authRequired) {
@@ -51,6 +77,8 @@ export async function apiRequest<T = unknown>(
       headers,
       body: body ? JSON.stringify(body) : undefined,
     })
+
+    checkForUpdate(response.headers as any)
 
     const text = await response.body.text()
     let data: T | undefined
@@ -116,7 +144,7 @@ export async function graphqlQuery<T = unknown>(
       headers: {
         'Content-Type': 'application/json',
         'Authorization': auth,
-        'User-Agent': 'ChainVue-CLI/0.1.0',
+        'User-Agent': USER_AGENT,
       },
       body: JSON.stringify({ query, variables }),
     })

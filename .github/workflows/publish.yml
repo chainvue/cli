@@ -7,6 +7,8 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    env:
+      DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,20 +32,23 @@ jobs:
 
       - name: Get version from package.json
         id: version
-        run: echo "version=$(node -p 'require("./package.json").version')" >> "$GITHUB_OUTPUT"
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Update LATEST_CLI_VERSION on Vercel
         run: |
           npm install -g vercel
-          for env in production preview development; do
-            vercel env rm LATEST_CLI_VERSION "$env" --yes --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" 2>/dev/null || true
-            echo "${{ steps.version.outputs.version }}" | vercel env add LATEST_CLI_VERSION "$env" --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID"
+          for e in production preview development; do
+            vercel env rm LATEST_CLI_VERSION "$e" --yes --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" 2>/dev/null || true
+            echo "$CLI_VERSION" | vercel env add LATEST_CLI_VERSION "$e" --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID"
           done
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: team_ZWvwlzfFy5lHj9GDpSnOzBAZ
           VERCEL_PROJECT_ID: prj_SawD8XnMTdlOc5x1Vl3nEMLbGhXX
+          CLI_VERSION: ${{ steps.version.outputs.version }}
 
       - name: Trigger Vercel redeploy
-        if: ${{ secrets.VERCEL_DEPLOY_HOOK != '' }}
-        run: curl -s -X POST "${{ secrets.VERCEL_DEPLOY_HOOK }}"
+        if: env.DEPLOY_HOOK != ''
+        run: curl -s -X POST "$DEPLOY_HOOK"

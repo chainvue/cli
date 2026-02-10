@@ -49,13 +49,16 @@ jobs:
 
       - name: Redeploy latest production deployment with updated env
         run: |
-          DEPLOY_URL=$(vercel ls --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --prod 2>/dev/null | awk 'NR==2{print $2}')
-          if [ -z "$DEPLOY_URL" ]; then
+          # Get latest production deployment via Vercel API
+          DEPLOY_ID=$(curl -sf -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v6/deployments?projectId=$VERCEL_PROJECT_ID&teamId=$VERCEL_ORG_ID&target=production&limit=1&state=READY" \
+            | python3 -c "import sys,json; print(json.loads(sys.stdin.read())['deployments'][0]['url'])")
+          if [ -z "$DEPLOY_ID" ]; then
             echo "::error::Could not find latest production deployment."
             exit 1
           fi
-          echo "Redeploying $DEPLOY_URL (using build cache, no rebuild)..."
-          vercel redeploy "$DEPLOY_URL" --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --no-wait
+          echo "Redeploying $DEPLOY_ID (using build cache, no rebuild)..."
+          vercel redeploy "https://$DEPLOY_ID" --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --no-wait
           echo "Redeploy triggered successfully with updated LATEST_CLI_VERSION=$CLI_VERSION"
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}

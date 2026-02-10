@@ -7,8 +7,6 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    env:
-      DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -49,6 +47,18 @@ jobs:
           VERCEL_PROJECT_ID: prj_SawD8XnMTdlOc5x1Vl3nEMLbGhXX
           CLI_VERSION: ${{ steps.version.outputs.version }}
 
-      - name: Trigger Vercel redeploy
-        if: env.DEPLOY_HOOK != ''
-        run: curl -s -X POST "$DEPLOY_HOOK"
+      - name: Redeploy latest production deployment with updated env
+        run: |
+          DEPLOY_URL=$(vercel ls --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --prod 2>/dev/null | awk 'NR==2{print $2}')
+          if [ -z "$DEPLOY_URL" ]; then
+            echo "::error::Could not find latest production deployment."
+            exit 1
+          fi
+          echo "Redeploying $DEPLOY_URL (using build cache, no rebuild)..."
+          vercel redeploy "$DEPLOY_URL" --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --no-wait
+          echo "Redeploy triggered successfully with updated LATEST_CLI_VERSION=$CLI_VERSION"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: team_ZWvwlzfFy5lHj9GDpSnOzBAZ
+          VERCEL_PROJECT_ID: prj_SawD8XnMTdlOc5x1Vl3nEMLbGhXX
+          CLI_VERSION: ${{ steps.version.outputs.version }}
